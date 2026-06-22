@@ -40,7 +40,8 @@
     ],
     "mac": {
       "target": ["dmg", "zip"],
-      "category": "public.app-category.productivity"
+      "category": "public.app-category.productivity",
+      "icon": "assets/icon.icns"
     },
     "fileAssociations": [
       { "ext": "md", "name": "Markdown", "role": "Viewer" },
