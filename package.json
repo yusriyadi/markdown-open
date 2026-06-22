@@ -3,10 +3,13 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "electron:dev": "concurrently \"vite\" \"sleep 2 && electron .\"",
+    "electron:build": "tsc -b && vite build && electron-builder"
   },
   "dependencies": {
     "highlight.js": "^11.11.1",
@@ -19,7 +22,29 @@
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^4.6.0",
+    "concurrently": "^10.0.3",
+    "electron": "^42.4.1",
+    "electron-builder": "^26.15.3",
     "typescript": "~5.7.3",
     "vite": "^6.4.1"
+  },
+  "build": {
+    "appId": "com.markdown-open.app",
+    "productName": "Markdown Open",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*.cjs"
+    ],
+    "mac": {
+      "target": ["dmg", "zip"],
+      "category": "public.app-category.productivity"
+    },
+    "fileAssociations": [
+      { "ext": "md", "name": "Markdown", "role": "Viewer" },
+      { "ext": "markdown", "name": "Markdown", "role": "Viewer" }
+    ]
   }
 }

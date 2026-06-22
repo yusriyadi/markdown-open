@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Header from './components/Header'
 import FileDropZone from './components/FileDropZone'
 import PreviewPane from './components/PreviewPane'
@@ -21,6 +21,19 @@ export default function App() {
   function handleExportPdf() {
     exportToPdf()
   }
+
+  // Electron: listen for file-open events (Finder "Open With" / double-click)
+  useEffect(() => {
+    const api = window.electronAPI
+    if (!api) return
+
+    api.onFileOpen(async (filePath: string) => {
+      const result = await api.readFile(filePath)
+      if ('content' in result) {
+        handleFileLoad(result.content, result.fileName)
+      }
+    })
+  }, [])
 
   return (
     <div className="app">
