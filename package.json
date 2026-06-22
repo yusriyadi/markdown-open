@@ -1,0 +1,25 @@
+{
+  "name": "markdown-open",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "highlight.js": "^11.11.1",
+    "markdown-it": "^14.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.6.0",
+    "typescript": "~5.7.3",
+    "vite": "^6.4.1"
+  }
+}
