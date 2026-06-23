@@ -104,7 +104,11 @@ export default function App() {
         )}
         <main className="main">
           {content ? (
-            <PreviewPane content={content} />
+            <PreviewPane
+              content={content}
+              currentFilePath={activeFilePath}
+              onNavigate={handleSelectFile}
+            />
           ) : (
             <FileDropZone onFileLoad={handleFileLoad} />
           )}
