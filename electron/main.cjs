@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog } = require('electron')
 const path = require('path')
 const fs = require('fs')
 
@@ -85,4 +85,42 @@ ipcMain.handle('read-file', async (event, filePath) => {
   } catch {
     return { error: 'Failed to read file' }
   }
+})
+
+// IPC: open native folder dialog
+ipcMain.handle('open-folder-dialog', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory'],
+    title: 'Open Workspace Folder',
+  })
+  if (result.canceled || result.filePaths.length === 0) {
+    return null
+  }
+  return result.filePaths[0]
+})
+
+// IPC: recursively scan directory for .md files
+ipcMain.handle('scan-directory', async (event, dirPath) => {
+  function scan(dir) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true })
+    const result = []
+    for (const entry of entries) {
+      if (entry.name.startsWith('.') || entry.name === 'node_modules') continue
+      const fullPath = path.join(dir, entry.name)
+      if (entry.isDirectory()) {
+        const children = scan(fullPath)
+        if (children.length > 0) {
+          result.push({ name: entry.name, path: fullPath, type: 'directory', children })
+        }
+      } else if (entry.isFile() && /\.(md|markdown)$/i.test(entry.name)) {
+        result.push({ name: entry.name, path: fullPath, type: 'file' })
+      }
+    }
+    result.sort((a, b) => {
+      if (a.type !== b.type) return a.type === 'directory' ? -1 : 1
+      return a.name.localeCompare(b.name)
+    })
+    return result
+  }
+  return scan(dirPath)
 })

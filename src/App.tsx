@@ -1,12 +1,22 @@
 import { useState, useRef, useEffect } from 'react'
 import Header from './components/Header'
+import Sidebar from './components/Sidebar'
 import FileDropZone from './components/FileDropZone'
 import PreviewPane from './components/PreviewPane'
 import { exportToPdf } from './lib/export-pdf'
 
+interface FileTreeNode {
+  name: string
+  path: string
+  type: 'file' | 'directory'
+  children?: FileTreeNode[]
+}
+
 export default function App() {
   const [content, setContent] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
+  const [fileTree, setFileTree] = useState<FileTreeNode[]>([])
+  const [activeFilePath, setActiveFilePath] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   function handleFileLoad(content: string, fileName: string) {
@@ -22,6 +32,26 @@ export default function App() {
     exportToPdf()
   }
 
+  async function handleOpenFolder() {
+    const api = window.electronAPI
+    if (!api) return
+    const folderPath = await api.openFolder()
+    if (!folderPath) return
+
+    const tree = await api.scanDirectory(folderPath)
+    setFileTree(tree)
+  }
+
+  async function handleSelectFile(filePath: string) {
+    const api = window.electronAPI
+    if (!api) return
+    const result = await api.readFile(filePath)
+    if ('content' in result) {
+      handleFileLoad(result.content, result.fileName)
+      setActiveFilePath(filePath)
+    }
+  }
+
   // Electron: listen for file-open events (Finder "Open With" / double-click)
   useEffect(() => {
     const api = window.electronAPI
@@ -31,9 +61,12 @@ export default function App() {
       const result = await api.readFile(filePath)
       if ('content' in result) {
         handleFileLoad(result.content, result.fileName)
+        setActiveFilePath(filePath)
       }
     })
   }, [])
+
+  const showSidebar = fileTree.length > 0
 
   return (
     <div className="app">
@@ -41,6 +74,7 @@ export default function App() {
         fileName={fileName}
         onOpenFile={handleOpenFile}
         onExportPdf={handleExportPdf}
+        onOpenFolder={window.electronAPI ? handleOpenFolder : undefined}
       />
 
       <input
@@ -60,13 +94,22 @@ export default function App() {
         }}
       />
 
-      <main className="main">
-        {content ? (
-          <PreviewPane content={content} />
-        ) : (
-          <FileDropZone onFileLoad={handleFileLoad} />
+      <div className="app-body">
+        {showSidebar && (
+          <Sidebar
+            tree={fileTree}
+            activePath={activeFilePath}
+            onSelectFile={handleSelectFile}
+          />
         )}
-      </main>
+        <main className="main">
+          {content ? (
+            <PreviewPane content={content} />
+          ) : (
+            <FileDropZone onFileLoad={handleFileLoad} />
+          )}
+        </main>
+      </div>
     </div>
   )
 }
