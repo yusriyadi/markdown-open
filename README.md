@@ -19,7 +19,7 @@ Open, preview, and export Markdown files — as a **web app** or **native macOS 
 ### Web App
 
 ```bash
-git clone https://github.com/YOUR_USER/markdown-open.git
+git clone https://github.com/yusriyadi/markdown-open.git
 cd markdown-open
 
 npm install
