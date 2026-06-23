@@ -16,6 +16,7 @@ export default function App() {
   const [content, setContent] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [fileTree, setFileTree] = useState<FileTreeNode[]>([])
+  const [workspacePath, setWorkspacePath] = useState<string | null>(null)
   const [activeFilePath, setActiveFilePath] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -40,6 +41,8 @@ export default function App() {
 
     const tree = await api.scanDirectory(folderPath)
     setFileTree(tree)
+    setWorkspacePath(folderPath)
+    document.title = `${folderPath.split('/').pop() || folderPath} — Markdown Open`
   }
 
   async function handleSelectFile(filePath: string) {
@@ -100,6 +103,7 @@ export default function App() {
             tree={fileTree}
             activePath={activeFilePath}
             onSelectFile={handleSelectFile}
+            workspacePath={workspacePath}
           />
         )}
         <main className="main">

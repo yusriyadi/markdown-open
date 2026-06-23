@@ -11,6 +11,7 @@ interface SidebarProps {
   tree: FileTreeNode[]
   activePath: string | null
   onSelectFile: (path: string) => void
+  workspacePath?: string | null
 }
 
 function TreeNode({ node, activePath, onSelectFile, depth }: {
@@ -60,13 +61,15 @@ function TreeNode({ node, activePath, onSelectFile, depth }: {
   )
 }
 
-export default function Sidebar({ tree, activePath, onSelectFile }: SidebarProps) {
+export default function Sidebar({ tree, activePath, onSelectFile, workspacePath }: SidebarProps) {
   if (!tree || tree.length === 0) return null
+
+  const folderName = workspacePath ? workspacePath.split('/').pop() || workspacePath : null
 
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <span>📁 Explorer</span>
+        <span title={workspacePath || undefined}>📁 {folderName || 'Explorer'}</span>
         <span className="sidebar-count">{countFiles(tree)} files</span>
       </div>
       <div className="sidebar-tree">
