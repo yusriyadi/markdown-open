@@ -105,7 +105,7 @@ ipcMain.handle('scan-directory', async (event, dirPath) => {
     const entries = fs.readdirSync(dir, { withFileTypes: true })
     const result = []
     for (const entry of entries) {
-      if (entry.name.startsWith('.') || entry.name === 'node_modules') continue
+      if (entry.name === 'node_modules' || entry.name === '.git') continue
       const fullPath = path.join(dir, entry.name)
       if (entry.isDirectory()) {
         const children = scan(fullPath)
