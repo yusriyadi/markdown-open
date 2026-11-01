@@ -2,6 +2,23 @@
 
 An offline Markdown and Mermaid viewer built with **Tauri + Rust**, **React**, and
 **TypeScript**. Available as a macOS desktop app or a standalone web app.
+Tauri also supports Windows installers; this repository's Windows build is still
+experimental and has not been built or tested on Windows.
+
+## Platform Support
+
+| Platform | Distribution | Project status |
+|---|---|---|
+| macOS Apple Silicon | `.app`, `.dmg`, `.zip` | Built and smoke-tested on the development Mac |
+| macOS Intel / Universal | `.app`, `.dmg` | Tauri build commands provided below; not tested for this project |
+| Windows x64 | NSIS `-setup.exe`, WiX `.msi` | Experimental build preparation below; Windows feature parity is pending |
+| Web | Static `dist/` | Builds independently of the desktop shell |
+
+Build macOS releases on macOS, and use a Windows machine or Windows CI runner for
+Windows installers. Changing the Rust target alone does not install the target OS
+SDKs or packaging tools. Tauri documents NSIS cross-compilation as an advanced
+fallback; `.msi` packaging requires Windows. See the official
+[Windows installer guide](https://v2.tauri.app/distribute/windows-installer/).
 
 ## Features
 
@@ -20,8 +37,13 @@ An offline Markdown and Mermaid viewer built with **Tauri + Rust**, **React**, a
 
 - Node.js 22.12+ and npm.
 - A current stable Rust toolchain installed with [rustup](https://rustup.rs/).
-- macOS 11+ with Xcode Command Line Tools (or Xcode) for desktop builds.
-- This release workflow targets Apple Silicon (`aarch64-apple-darwin`).
+- For macOS builds: macOS 11+ and Xcode Command Line Tools (or Xcode). Install
+  Command Line Tools with `xcode-select --install` if needed.
+- For Windows builds: Microsoft C++ Build Tools with **Desktop development with
+  C++**, a Windows SDK, and Microsoft Edge WebView2 Runtime. Use the Rust **MSVC**
+  toolchain. See [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
+- Internet access during initial setup/build to download npm packages, Rust crates,
+  and platform packaging tools. This differs from using the installed app offline.
 
 ```bash
 git clone https://github.com/yusriyadi/markdown-open.git
@@ -37,8 +59,10 @@ npm run desktop:dev
 
 This starts Vite and the Tauri desktop shell. Rust handles filesystem operations,
 OS file-open events, native dialogs, and printing. React, markdown-it, highlight.js,
-and Mermaid run inside the system WKWebView. The installed app needs no Node.js,
-Rust installation, development server, or internet for its core features.
+and Mermaid run inside the system WKWebView on macOS. Tauri uses WebView2 on
+Windows. The installed macOS app needs no Node.js, Rust installation, development
+server, or internet for its core features. On Windows, WebView2 must also be
+available; an installer may need internet to provision that runtime.
 
 ### Web
 
@@ -52,18 +76,34 @@ The web build is written to `dist/`. File selection and drag/drop use browser AP
 Open Folder, Finder integration, and desktop filesystem navigation are available
 in the desktop app. PDF export uses the browser print dialog in web mode.
 
-## Build macOS Distribution
+## Build Distributions
+
+Run the commands from the repository root. `npm run build` builds only the web
+frontend; it does **not** create a desktop application or installer. Tauri's release
+build runs the frontend build automatically through `beforeBuildCommand`.
+
+### macOS Apple Silicon — tested workflow
+
+Run on a Mac after installing the prerequisites:
 
 ```bash
+npm ci
 rustup target add aarch64-apple-darwin
 npm run desktop:build
 ```
 
-Outputs in `release/tauri-arm64/`:
+`desktop:build` currently targets **macOS arm64 only**. It runs Tauri, then uses
+macOS `ditto` to create a ZIP and copies the artifacts into `release/tauri-arm64/`:
 
-- `Markdown Open.app`
-- `Markdown Open-1.0.0-arm64.dmg`
-- `Markdown Open-1.0.0-arm64-mac.zip`
+| Output | Purpose |
+|---|---|
+| `Markdown Open.app` | Application bundle |
+| `Markdown Open-1.0.0-arm64.dmg` | Drag-to-Applications installer |
+| `Markdown Open-1.0.0-arm64-mac.zip` | Compressed application bundle |
+
+The filenames reflect the current version. Before a future release, keep the
+versions in `package.json`, `src-tauri/Cargo.toml`, and `src-tauri/tauri.conf.json`
+in sync.
 
 Open the DMG and drag the application to Applications. This replaces the previous
 app only if you choose to do so. Finder file associations are registered by the
@@ -71,12 +111,129 @@ bundle; users choose their preferred default viewer in macOS.
 
 The packaging script records exact DMG, ZIP, and installed app sizes in
 `docs/tauri-size-report.json`, comparing them with the preserved Electron baseline.
-The old Electron artifacts remain separate in `release/` on the development machine.
+It exits with a failure status if the DMG reduction is below the proposed 50%
+target, even if the artifacts were generated. Old Electron artifacts remain
+separate in `release/` on the development machine.
 
-Signing and notarization require an appropriate Apple Developer identity and
-credentials. Local builds without those credentials are not notarized for public
-release; macOS may block first launch of a downloaded copy. Do not treat an unsigned
-local build as an Apple-verified distribution.
+### macOS Intel / Universal — not yet tested
+
+Tauri can build these variants on a Mac, but this project's custom packaging script
+only handles arm64. Use the Tauri CLI directly for other architectures:
+
+```bash
+# Intel
+rustup target add x86_64-apple-darwin
+npm run tauri -- build --target x86_64-apple-darwin
+
+# Universal: Apple Silicon + Intel in one app
+rustup target add aarch64-apple-darwin x86_64-apple-darwin
+npm run tauri -- build --target universal-apple-darwin
+```
+
+Outputs are under:
+
+```text
+src-tauri/target/<target>/release/bundle/macos/Markdown Open.app
+src-tauri/target/<target>/release/bundle/dmg/*.dmg
+```
+
+For the universal build, `<target>` is `universal-apple-darwin`. These commands do
+not run the custom ZIP/size-report script. To create a ZIP manually, substitute the
+actual app path:
+
+```bash
+ditto -c -k --sequesterRsrc --keepParent \
+  "src-tauri/target/universal-apple-darwin/release/bundle/macos/Markdown Open.app" \
+  "Markdown Open-universal-mac.zip"
+```
+
+### Windows x64 — experimental build preparation
+
+Run on **Windows**, using PowerShell and the Windows prerequisites above. Do not
+use `npm run desktop:build`: it selects an Apple target and a macOS packaging script.
+
+The checked-in Tauri configuration currently selects `app`/`dmg` and a macOS
+`.icns` icon. Prepare Windows-specific installer settings before attempting a build:
+
+1. Install the JavaScript dependencies and Rust target, then generate Windows icons:
+
+   ```powershell
+   npm ci
+   rustup target add x86_64-pc-windows-msvc
+   npm run tauri -- icon assets/icon-1024.png
+   ```
+
+   The icon command generates `src-tauri/icons/icon.ico` and other platform icons.
+   Review generated assets before committing them.
+
+2. Create `src-tauri/tauri.windows.conf.json` with this content:
+
+   ```json
+   {
+     "bundle": {
+       "targets": ["nsis", "msi"],
+       "icon": ["icons/icon.ico"]
+     }
+   }
+   ```
+
+   Tauri automatically merges this platform-specific file on Windows, overriding
+   the Mac bundle targets and icon. This file is a preparation step described here;
+   it is not yet checked into this branch.
+
+3. Build the installers:
+
+   ```powershell
+   npm run tauri -- build --target x86_64-pc-windows-msvc
+   ```
+
+   To build just the NSIS setup executable:
+
+   ```powershell
+   npm run tauri -- build --target x86_64-pc-windows-msvc --bundles nsis
+   ```
+
+Expected output locations after a successful Windows build:
+
+```text
+src-tauri/target/x86_64-pc-windows-msvc/release/markdown-open.exe
+src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*-setup.exe
+src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
+```
+
+Distribute the installer instead of assuming the raw application executable will
+provision WebView2. Tauri's default Windows installer can download WebView2 when
+needed. Completely offline installation on a machine without WebView2 needs a
+separate offline-runtime installer configuration and increases package size.
+For MSI build errors involving `light.exe`, check the VBSCRIPT prerequisite in the
+[Tauri Windows setup guide](https://v2.tauri.app/start/prerequisites/#vbscript-for-msi-installers).
+
+**Windows parity is not complete.** Before publishing a Windows release:
+
+- Implement file opening from launch arguments/Explorer **Open With** and forwarding
+  to an existing instance. Current OS file-open handling is macOS-specific.
+- Adapt close/quit behavior. The current close handler hides the window for macOS
+  Dock reopening; Windows needs a deliberate way to reopen or quit the app.
+- Adapt workspace folder-name display, which currently splits paths using `/`.
+- Build and test native dialogs, file drops, relative paths, Mermaid, PDF printing,
+  installation, and uninstall on Windows. No Windows artifacts or test results
+  have been produced for this repository yet.
+
+### Signing and release verification
+
+macOS signing and notarization require an appropriate Apple Developer identity and
+credentials. Current local builds have an ad-hoc signature and are not notarized
+for public release; macOS may block first launch of a downloaded copy. Windows
+code signing is configured separately for the Windows installers.
+
+Before sharing a release, run the validation commands below and smoke-test the
+**packaged app** on each target OS. Confirm local file opening, Mermaid rendering,
+PDF export, and installer behavior. The macOS size report does not predict Windows
+installer size, especially when bundling WebView2 for offline installation.
+
+Official references: [macOS bundles](https://v2.tauri.app/distribute/macos-application-bundle/),
+[DMG](https://v2.tauri.app/distribute/dmg/), and
+[Windows installers](https://v2.tauri.app/distribute/windows-installer/).
 
 ## Usage
 
@@ -115,8 +272,9 @@ npm run build
 Rust tests exercise document permissions, empty/Unicode files, relative links,
 workspace filtering/order, symlink handling, and queued file-open requests.
 Frontend tests cover stale loads, cancellation, the native event inbox lifecycle,
-and Markdown source escaping. A DOM integration test also checks browser file loading, empty documents, and error preservation without Tauri. Native smoke testing must use the packaged macOS
-application: Finder cold/warm opens, native drops/dialogs, and real PDF output
+and Markdown source escaping. A DOM integration test also checks browser file
+loading, empty documents, and error preservation without Tauri. Native smoke testing
+must use the packaged macOS application: Finder cold/warm opens, native drops/dialogs, and real PDF output
 cannot be proven by a Chromium-only test.
 
 ## Architecture
