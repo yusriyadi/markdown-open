@@ -33,6 +33,12 @@ fallback; `.msi` packaging requires Windows. See the official
 - System light/dark theme and PDF export through the platform print dialog.
 - Browser mode for opening local files without installing the desktop app.
 
+## Codebase navigation
+
+See the [codebase map](docs/codebase-map.md) for important paths, entry points,
+and feature flows across web, desktop, and Android. Agent working guidelines are
+in [AGENTS.md](AGENTS.md).
+
 ## Development
 
 ### Prerequisites
