@@ -5,6 +5,10 @@ description = "An offline Markdown and Mermaid viewer"
 authors = ["Yusriyadi"]
 edition = "2021"
 
+[lib]
+name = "markdown_open_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
@@ -12,6 +16,8 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [] }
 serde = { version = "1", features = ["derive"] }
 url = "2"
+
+[target.'cfg(not(target_os = "android"))'.dependencies]
 rfd = "0.15"
 open = "5"
 

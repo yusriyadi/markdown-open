@@ -1,9 +1,9 @@
 import { waitForMermaid } from './mermaid'
-import { getDesktop, isDesktop } from './platform'
+import { getNative, isNative } from './platform'
 
 export async function exportToPdf(): Promise<void> {
   await waitForMermaid()
   await document.fonts.ready
-  if (isDesktop) await (await getDesktop()).printDocument()
+  if (isNative) await (await getNative()).printDocument()
   else window.print()
 }

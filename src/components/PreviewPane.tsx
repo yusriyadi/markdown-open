@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback, useMemo } from 'react'
 import { parseMarkdown } from '../lib/markdown'
 import { highlightCodeBlocks } from '../lib/highlight'
 import { renderMermaidDiagrams } from '../lib/mermaid'
-import { getDesktop, isDesktop } from '../lib/platform'
+import { getNative, isDesktop, isNative, isAndroid } from '../lib/platform'
 
 interface PreviewPaneProps {
   content: string
@@ -43,9 +43,9 @@ export default function PreviewPane({ content, currentFilePath, onNavigate, onEr
     if (href.startsWith('#')) return
 
     if (/^(https?:|mailto:)/i.test(href)) {
-      if (isDesktop) {
+      if (isNative) {
         e.preventDefault()
-        void getDesktop().then(api => api.openExternal(href)).catch(onError)
+        void getNative().then(api => api.openExternal(href)).catch(onError)
       } else {
         anchor?.setAttribute('target', '_blank')
         anchor?.setAttribute('rel', 'noopener noreferrer')
@@ -59,6 +59,7 @@ export default function PreviewPane({ content, currentFilePath, onNavigate, onEr
     try { pathname = decodeURIComponent(href.split(/[?#]/)[0]) } catch { return }
     if (!/\.(md|markdown)$/i.test(pathname)) return
     if (currentFilePath && onNavigate && isDesktop) onNavigate(href)
+    else if (isAndroid) onError(new Error('Use Open File to open the linked Markdown document.'))
   }, [currentFilePath, onNavigate, onError])
 
   return (
