@@ -1,3 +1,5 @@
+import { createMermaidViewer, getDiagramView, restoreDiagramScroll } from './mermaid-viewer'
+
 let pendingRender: Promise<void> = Promise.resolve()
 let diagramId = 0
 
@@ -29,12 +31,12 @@ export function renderMermaidDiagrams(
         try {
           const { svg } = await mermaid.render(`mermaid-${++diagramId}`, code)
           if (isCancelled()) return
-          const output = document.createElement('div')
-          output.className = dark ? 'mermaid-output mermaid-output-dark' : 'mermaid-output'
-          output.innerHTML = svg
+          const view = getDiagramView(diagram.querySelector('.mermaid-output'))
+          const output = createMermaidViewer(svg, dark, view)
           diagram.querySelector('.mermaid-output')?.remove()
           diagram.querySelector('.mermaid-error')?.remove()
           diagram.append(output)
+          restoreDiagramScroll(output, view)
           source.hidden = true
         } catch {
           if (isCancelled()) return

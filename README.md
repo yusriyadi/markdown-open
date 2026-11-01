@@ -24,6 +24,7 @@ fallback; `.msi` packaging requires Windows. See the official
 
 - Markdown preview with tables, code fences, and syntax highlighting.
 - Offline Mermaid diagrams with light/dark themes and source fallback for invalid diagrams.
+- Per-diagram zoom controls and two-way scrolling for wide or tall diagrams.
 - Native file/folder selection and a recursive Markdown workspace explorer.
 - Local Markdown links resolved relative to the current document.
 - Finder **Open With**, including when the app is closed or its window is hidden.
@@ -260,6 +261,16 @@ flowchart LR
 
 See `sample.md` for flowchart and sequence diagram examples. Diagram scripts are
 bundled locally and loaded only for documents containing Mermaid blocks.
+
+Each diagram has **− / +** controls for 50–500% zoom and a **Fit** button to return
+to its initial fitted size. Zoom is relative to that size. Scroll horizontally or
+vertically inside the diagram with a mouse, trackpad, or touchscreen. When the
+diagram area has keyboard focus, use `+` / `-` to zoom and `0` to fit. Each diagram
+keeps its own zoom and scroll position when the system theme changes.
+
+PDF export hides the controls and fits diagrams to the page width regardless of
+the on-screen zoom. Tall diagrams are not limited by the screen's scroll viewport
+when printing.
 
 ## Validation
 
