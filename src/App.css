@@ -342,6 +342,40 @@ body {
   line-height: 1.6;
 }
 
+/* Mermaid diagrams */
+.mermaid-diagram {
+  margin-bottom: 1em;
+  min-width: 0;
+}
+
+.mermaid-output {
+  background: #fff;
+  overflow-x: auto;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.mermaid-output-dark {
+  background: #1e293b;
+}
+
+.mermaid-output svg {
+  display: block;
+  margin: 0 auto;
+  height: auto;
+}
+
+.markdown-body .mermaid-output p {
+  margin: 0;
+}
+
+.mermaid-error {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
 /* Blockquote */
 .markdown-body blockquote {
   border-left: 4px solid var(--accent);
@@ -486,5 +520,16 @@ body {
   .markdown-body img {
     max-width: 100%;
     break-inside: avoid;
+  }
+
+  .mermaid-output {
+    overflow: visible;
+    break-inside: avoid;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .mermaid-output svg {
+    max-width: 100% !important;
   }
 }

@@ -1,6 +1,7 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useMemo } from 'react'
 import { parseMarkdown } from '../lib/markdown'
 import { highlightCodeBlocks } from '../lib/highlight'
+import { renderMermaidDiagrams } from '../lib/mermaid'
 
 interface PreviewPaneProps {
   content: string
@@ -10,11 +11,24 @@ interface PreviewPaneProps {
 
 export default function PreviewPane({ content, currentFilePath, onNavigate }: PreviewPaneProps) {
   const previewRef = useRef<HTMLDivElement>(null)
-  const html = parseMarkdown(content)
+  const html = useMemo(() => parseMarkdown(content), [content])
 
   useEffect(() => {
-    if (previewRef.current) {
-      highlightCodeBlocks(previewRef.current)
+    const container = previewRef.current
+    if (!container) return
+    highlightCodeBlocks(container)
+
+    const colorScheme = window.matchMedia('(prefers-color-scheme: dark)')
+    let revision = 0
+    const render = () => {
+      const current = ++revision
+      void renderMermaidDiagrams(container, colorScheme.matches, () => current !== revision)
+    }
+    render()
+    colorScheme.addEventListener('change', render)
+    return () => {
+      revision++
+      colorScheme.removeEventListener('change', render)
     }
   }, [html])
 

@@ -31,6 +31,25 @@ def fibonacci(n: int) -> list[int]:
 print(fibonacci(10))
 ```
 
+## Mermaid Diagram
+
+```mermaid
+flowchart LR
+  A[Open Markdown] --> B{Mermaid block?}
+  B -->|Yes| C[Render diagram]
+  B -->|No| D[Render text]
+  C --> E[Export PDF]
+  D --> E
+```
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant App as Markdown Open
+  User->>App: Open a Markdown file
+  App-->>User: Show preview and diagrams
+```
+
 ## Blockquote
 
 > The best way to predict the future is to create it.
