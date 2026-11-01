@@ -33,6 +33,21 @@ bukan artefak yang siap diunggah ke Play Store. APK memerlukan Android 7.0/API 2
 atau lebih baru dan Android System WebView yang mendukung frontend modern.
 Untuk rilis publik, gunakan konfigurasi signing sendiri dan build release/AAB.
 
+## Identitas aplikasi versi terbaru
+
+Versi `1.1.1` memakai application ID dan namespace `com.tellabs.markdownopen.app`.
+Registrasi plugin Rust dan package Kotlin disesuaikan bersama. Android menganggapnya
+aplikasi berbeda dari versi `1.1.0` (`com.markdownopen.app`); versi lama dapat tetap
+terpasang berdampingan. Catatan hasil build `1.1.0` di bawah adalah riwayat, bukan
+identitas APK terbaru.
+
+Validasi versi `1.1.1`: build release Rust/Kotlin dan signature v2/v3 berhasil;
+APK terverifikasi memakai package baru, versionCode `1001001`, min SDK 24,
+ABI arm64-v8a, dan plugin Kotlin namespace baru. Ukuran sekitar 12,1 MiB.
+APK dengan package baru ini belum dites pada perangkat. Tes frontend (13) dan
+Rust desktop (6) lulus. Output lokal:
+`release/android/Markdown-Open-1.1.1-android-arm64-release-local-signed.apk`.
+
 ## Hasil build pengembangan
 
 Build debug arm64 versi `1.1.0` berhasil dibuat. Output Gradle:

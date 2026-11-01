@@ -11,8 +11,9 @@ tidak disimpan agar peta tetap berguna setelah perubahan kecil.
 | `src/` | UI React dan logika frontend bersama untuk browser, desktop, Android |
 | `src/components/` | Header, sidebar workspace, drop zone, preview |
 | `src/lib/` | Bridge native, parser, Mermaid, PDF, pengurutan operasi async |
+| `src/hooks/` | Hook React bersama; `useScrollHeader.ts` mengatur visibilitas header saat membaca |
 | `src-tauri/src/` | Entry point Rust, backend desktop, bridge Android |
-| `src-tauri/android/src/main/java/com/markdownopen/app/` | Plugin Kotlin untuk picker, intent, tautan eksternal, print |
+| `src-tauri/android/src/main/java/com/tellabs/markdownopen/app/` | Plugin Kotlin untuk picker, intent, tautan eksternal, print |
 | `src-tauri/gen/android/` | Proyek Gradle yang dilacak Git, termasuk manifest dan Activity kustom |
 | `src-tauri/capabilities/` | Izin command IPC per platform |
 | `scripts/` | Packaging distribusi macOS |
@@ -59,7 +60,7 @@ desktop menerima path yang telah diberi akses.
 
 Path komponen di bagian ini berada di `src/components/`; file Rust di
 `src-tauri/src/`. Plugin Kotlin berada di
-`src-tauri/android/src/main/java/com/markdownopen/app/DocumentsPlugin.kt`.
+`src-tauri/android/src/main/java/com/tellabs/markdownopen/app/DocumentsPlugin.kt`.
 
 ### File dari Finder, drop, Open With, dan Share
 
@@ -105,6 +106,15 @@ memilih dokumen lain melalui Open File; URI provider tidak menjadi path filesyst
 Mermaid memakai mode keamanan strict. Saat tema berubah, render mengembalikan state
 zoom/scroll sebelumnya. Jangan mengubah ukuran cetak berdasarkan zoom layar.
 
+### Zoom halaman desktop
+
+`src-tauri/tauri.conf.json` mengaktifkan `app.windows[].zoomHotkeysEnabled`.
+`src-tauri/capabilities/main.json` memberi izin
+`core:webview:allow-set-webview-zoom` pada window desktop lokal. Tauri menangani
+Cmd `+`/`=`/`-` dan Cmd `0` pada macOS (Ctrl pada desktop lain), tanpa handler React
+kustom. Ini zoom seluruh halaman, terpisah dari zoom per diagram Mermaid.
+Konfigurasi window/capability Android tetap memakai override platform sendiri.
+
 ### Export PDF
 
 `Header.tsx` atau shortcut Ctrl/Cmd+P di `App.tsx` →
@@ -119,10 +129,24 @@ zoom/scroll sebelumnya. Jangan mengubah ukuran cetak berdasarkan zoom layar.
 Aturan `@media print` di `src/App.css` menyembunyikan UI/kontrol diagram dan
 menyesuaikan diagram ke lebar halaman. Dialog OS mengelola simpan/cetak/batal.
 
+### Header mengikuti scroll
+
+`src/App.tsx` menghubungkan scroll container `.main` ke
+`src/hooks/useScrollHeader.ts`. Hook mengakumulasi gerakan 20 px: turun menyembunyikan
+header, naik menampilkannya, dan posisi paling atas selalu menampilkan header.
+Event scroll dari elemen lain diabaikan. Perubahan ukuran akibat render diagram
+atau animasi header tidak dianggap sebagai perubahan arah scroll.
+
+`Header.tsx` tetap komponen bersama tanpa perubahan. Pembungkus `.header-shell`
+di `App.tsx` dan CSS di `src/App.css` mengatur collapse serta animasi; berlaku di
+browser, desktop, dan Android. Tab menampilkan header agar tombol dapat dijangkau
+keyboard; dokumen baru mereset scroll dan menampilkan header. Animasi mengikuti
+preferensi reduced motion dan pembungkus disembunyikan saat mencetak.
+
 ### Layout dan integrasi Android
 
 - `src/App.css`: aturan khusus ponsel menggunakan `.app-android`.
-- `src-tauri/gen/android/app/src/main/java/com/markdownopen/app/MainActivity.kt`:
+- `src-tauri/gen/android/app/src/main/java/com/tellabs/markdownopen/app/MainActivity.kt`:
   edge-to-edge dan padding system bars/display cutout.
 - `src-tauri/gen/android/app/src/main/AndroidManifest.xml`: launcher, singleTask,
   filter VIEW/SEND, MIME type, permission, provider.

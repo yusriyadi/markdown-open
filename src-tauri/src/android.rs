@@ -113,7 +113,7 @@ pub fn run() {
             Builder::<Wry>::new("documents")
                 .setup(|app, api| {
                     let handle =
-                        api.register_android_plugin("com.markdownopen.app", "DocumentsPlugin")?;
+                        api.register_android_plugin("com.tellabs.markdownopen.app", "DocumentsPlugin")?;
                     app.manage(AndroidDocuments(handle));
                     Ok(())
                 })

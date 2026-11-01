@@ -1,4 +1,4 @@
-package com.markdownopen.app
+package com.tellabs.markdownopen.app
 
 import android.os.Bundle
 import android.view.View

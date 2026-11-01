@@ -48,6 +48,36 @@ body {
   overflow: hidden;
 }
 
+/* Collapse the shared header and return its space to the reading area. */
+.header-shell {
+  display: grid;
+  grid-template-rows: 1fr;
+  flex-shrink: 0;
+  transition: grid-template-rows 180ms ease;
+}
+
+.header-shell-content {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.header-shell .header {
+  transition: transform 180ms ease, visibility 180ms;
+}
+
+.header-shell-hidden {
+  grid-template-rows: 0fr;
+}
+
+.header-shell-hidden .header {
+  transform: translateY(-100%);
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-shell, .header-shell .header { transition: none; }
+}
+
 /* === Header === */
 .header {
   display: flex;
@@ -520,6 +550,7 @@ body {
     margin: 15mm;
   }
 
+  .header-shell,
   .header,
   .sidebar,
   .dropzone,

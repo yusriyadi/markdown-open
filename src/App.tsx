@@ -6,10 +6,12 @@ import PreviewPane from './components/PreviewPane'
 import { exportToPdf } from './lib/export-pdf'
 import { errorMessage, getNative, isDesktop, isNative, isAndroid } from './lib/platform'
 import { LatestTask } from './lib/latest-task'
+import { useScrollHeader } from './hooks/useScrollHeader'
 import type { DocumentData, FileTreeNode } from './lib/types'
 
 export default function App() {
   const [document, setDocument] = useState<DocumentData | null>(null)
+  const { hidden: headerHidden, scrollRef, onScroll, showHeader } = useScrollHeader(document)
   const [fileTree, setFileTree] = useState<FileTreeNode[]>([])
   const [workspacePath, setWorkspacePath] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -92,14 +94,20 @@ export default function App() {
   }, [document])
 
   return (
-    <div className={`app${isAndroid ? ' app-android' : ''}`}>
-      <Header
-        fileName={document?.fileName ?? null}
-        onOpenFile={handleOpenFile}
-        onExportPdf={handleExportPdf}
-        exporting={exporting}
-        onOpenFolder={isDesktop ? handleOpenFolder : undefined}
-      />
+    <div className={`app${isAndroid ? ' app-android' : ''}`}
+      onKeyDownCapture={event => { if (event.key === 'Tab') showHeader() }}>
+      <div className={`header-shell${headerHidden ? ' header-shell-hidden' : ''}`}
+        aria-hidden={headerHidden} onFocusCapture={showHeader}>
+        <div className="header-shell-content">
+          <Header
+            fileName={document?.fileName ?? null}
+            onOpenFile={handleOpenFile}
+            onExportPdf={handleExportPdf}
+            exporting={exporting}
+            onOpenFolder={isDesktop ? handleOpenFolder : undefined}
+          />
+        </div>
+      </div>
       {error && (
         <div className="error-banner" role="alert">
           <span>{error}</span>
@@ -117,7 +125,7 @@ export default function App() {
           <Sidebar tree={fileTree} activePath={document?.path ?? null}
             onSelectFile={handleSelectFile} workspacePath={workspacePath} />
         )}
-        <main className="main">
+        <main className="main" ref={scrollRef} onScroll={onScroll}>
           {document !== null ? (
             <PreviewPane content={document.content} currentFilePath={document.path}
               onNavigate={href => {

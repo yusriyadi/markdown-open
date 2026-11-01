@@ -1,6 +1,6 @@
 {
   "architecture": "arm64",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "baseline": {
     "commit": "67429f0",
     "architecture": "arm64",
@@ -9,10 +9,10 @@
     "appBytes": 478917627
   },
   "tauri": {
-    "dmgBytes": 6160567,
-    "zipBytes": 5026753,
-    "appBytes": 11384973
+    "dmgBytes": 6225809,
+    "zipBytes": 5091820,
+    "appBytes": 11385069
   },
-  "dmgReductionPercent": 96.31,
+  "dmgReductionPercent": 96.27,
   "meetsDmgTarget": true
 }

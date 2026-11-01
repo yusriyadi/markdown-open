@@ -49,3 +49,49 @@ it('opens browser files without Tauri and preserves empty documents and errors',
   expect(host.querySelector('[role=alert]')?.textContent).toContain('Choose a Markdown file')
   expect(host.querySelector('.header-filename')?.textContent).toBe('empty.md')
 })
+
+
+it('hides the shared header on downward reading scroll and restores it without reacting to nested scrolling', async () => {
+  const main = host.querySelector<HTMLElement>('.main')!
+  Object.defineProperties(main, {
+    clientHeight: { configurable: true, value: 500 },
+    scrollHeight: { configurable: true, value: 2000 },
+  })
+  await choose('# Long document', 'long.md')
+  const shell = host.querySelector<HTMLElement>('.header-shell')!
+  const scroll = async (top: number) => {
+    main.scrollTop = top
+    await act(async () => main.dispatchEvent(new Event('scroll')))
+  }
+
+  await scroll(12)
+  expect(shell.getAttribute('aria-hidden')).toBe('false')
+  await scroll(40)
+  expect(shell.getAttribute('aria-hidden')).toBe('true')
+
+  // Layout changes when the header collapses must not look like an upward gesture.
+  Object.defineProperty(main, 'clientHeight', { configurable: true, value: 570 })
+  await scroll(25)
+  expect(shell.getAttribute('aria-hidden')).toBe('true')
+  await scroll(3)
+  expect(shell.getAttribute('aria-hidden')).toBe('false')
+
+  const nested = host.querySelector<HTMLElement>('.markdown-body')!
+  await act(async () => nested.dispatchEvent(new Event('scroll', { bubbles: true })))
+  expect(shell.getAttribute('aria-hidden')).toBe('false')
+
+  await scroll(100)
+  expect(shell.getAttribute('aria-hidden')).toBe('true')
+  await scroll(75)
+  expect(shell.getAttribute('aria-hidden')).toBe('false')
+  await scroll(110)
+  expect(shell.getAttribute('aria-hidden')).toBe('true')
+  await act(async () => main.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true })))
+  expect(shell.getAttribute('aria-hidden')).toBe('false')
+
+  await scroll(150)
+  expect(shell.getAttribute('aria-hidden')).toBe('true')
+  await choose('# Next document', 'next.md')
+  expect(shell.getAttribute('aria-hidden')).toBe('false')
+  expect(main.scrollTop).toBe(0)
+})

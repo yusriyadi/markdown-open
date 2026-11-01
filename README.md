@@ -106,8 +106,8 @@ macOS `ditto` to create a ZIP and copies the artifacts into `release/tauri-arm64
 | Output | Purpose |
 |---|---|
 | `Markdown Open.app` | Application bundle |
-| `Markdown Open-1.1.0-arm64.dmg` | Drag-to-Applications installer |
-| `Markdown Open-1.1.0-arm64-mac.zip` | Compressed application bundle |
+| `Markdown Open-1.1.1-arm64.dmg` | Drag-to-Applications installer |
+| `Markdown Open-1.1.1-arm64-mac.zip` | Compressed application bundle |
 
 The filenames reflect the current version. Before a future release, keep the
 versions in `package.json`, `src-tauri/Cargo.toml`, and `src-tauri/tauri.conf.json`
@@ -257,7 +257,7 @@ ordinary filesystem paths. No broad storage permission is requested.
 This debug APK is for manual testing. Publishing to Google Play requires a separate
 release build/AAB and release signing configuration. See the
 [Android build and manual test guide](docs/android-manual-testing.md) for device
-checks and limitations. Android uses application ID `com.markdownopen.app`.
+checks and limitations. Android uses application ID `com.tellabs.markdownopen.app`.
 
 ### Windows x64 — experimental build preparation
 
@@ -358,6 +358,14 @@ Official references: [macOS bundles](https://v2.tauri.app/distribute/macos-appli
 Export waits for Mermaid rendering and document fonts. The native print dialog
 owns the save/print/cancel interaction; cancelling preserves the open document.
 Images explicitly referenced from remote sites still require internet access.
+
+### Desktop page zoom
+
+On macOS, use **Cmd + +** (or **Cmd + =**) and **Cmd + -** to zoom the whole
+application page, and **Cmd + 0** to reset to 100%. Other desktop platforms use
+Ctrl. These shortcuts are provided by Tauri's `zoomHotkeysEnabled` window setting
+and the desktop WebView zoom permission. Mermaid's per-diagram controls remain
+independent. Browser mode uses the browser's own page zoom shortcuts.
 
 ### Mermaid
 
