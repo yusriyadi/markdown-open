@@ -60,6 +60,34 @@ APK berhasil diinstal dan dibuka pada perangkat RMX1971. Pemilik perangkat
 mengonfirmasi sampel Markdown/Mermaid berfungsi saat tes manual. Checklist
 lengkap di bawah belum seluruhnya diverifikasi.
 
+## Build release untuk ukuran lebih kecil
+
+```bash
+npm run android:apk:release
+```
+
+Build release arm64 berhasil dengan optimasi ukuran Rust, LTO, dan stripping
+simbol debug. Perbandingan APK lokal:
+
+| Build | Ukuran |
+|---|---:|
+| Debug | 133,63 MiB |
+| Release, ditandatangani lokal | 12,07 MiB |
+
+Ukuran APK turun **90,97%**. Output unsigned asli berada di
+`src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk`.
+Salinan lokal untuk dipasang berada di
+`release/android/Markdown-Open-1.1.0-android-arm64-release-local-signed.apk`.
+
+APK release lokal ditandatangani memakai **debug keystore yang sudah ada** agar
+bisa dipasang untuk tes manual dan menggunakan identitas signing yang sama dengan
+APK debug sebelumnya. Build tetap mode release dan tidak debuggable; key ini bukan
+key distribusi publik. Untuk publikasi, tandatangani output unsigned dengan release
+keystore sendiri. Folder `release/` tidak masuk Git.
+
+Signature v2/v3 dan alignment APK terverifikasi, ABI hanya arm64-v8a, serta plugin
+dokumen native tetap ada dalam DEX. APK release ini belum dites ulang pada perangkat.
+
 ## Checklist di perangkat
 
 1. Pasang APK arm64, lalu buka aplikasi. Pastikan toolbar tidak tertutup status bar

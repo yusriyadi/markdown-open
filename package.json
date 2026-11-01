@@ -14,7 +14,8 @@
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
     "android:init": "tauri android init --skip-targets-install",
     "android:dev": "tauri android dev",
-    "android:apk": "tauri android build --debug --target aarch64 --apk"
+    "android:apk": "tauri android build --debug --target aarch64 --apk",
+    "android:apk:release": "tauri android build --target aarch64 --apk"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.12.4",

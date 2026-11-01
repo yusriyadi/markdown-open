@@ -198,6 +198,26 @@ use it directly; running `android:init` again can overwrite native customization
 Initial dependency downloads need internet. Installed local Markdown and bundled
 Mermaid work offline.
 
+#### Optimized release APK
+
+To build arm64 in release mode, with Rust size optimizations and stripped debug
+symbols, run:
+
+```bash
+npm run android:apk:release
+```
+
+Release output is under:
+
+```text
+src-tauri/gen/android/app/build/outputs/apk/universal/release/
+```
+
+Without a release signing configuration, Gradle produces an unsigned APK. Sign it
+with your own release keystore before distributing it. A release build signed with
+the local debug key can be used for device testing, but that key is not a public
+release signing identity. Keep keystores and passwords outside Git.
+
 #### Install on a connected device
 
 Enable Developer options and USB debugging on the phone, connect it by USB, and
