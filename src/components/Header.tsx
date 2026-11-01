@@ -2,10 +2,11 @@ interface HeaderProps {
   fileName: string | null
   onOpenFile: () => void
   onExportPdf: () => void
+  exporting?: boolean
   onOpenFolder?: () => void
 }
 
-export default function Header({ fileName, onOpenFile, onExportPdf, onOpenFolder }: HeaderProps) {
+export default function Header({ fileName, onOpenFile, onExportPdf, onOpenFolder, exporting }: HeaderProps) {
   return (
     <header className="header">
       <h1 className="header-title">📝 Markdown Open</h1>
@@ -19,8 +20,8 @@ export default function Header({ fileName, onOpenFile, onExportPdf, onOpenFolder
         <button className="btn btn-open" onClick={onOpenFile}>
           📄 Open File
         </button>
-        <button className="btn btn-pdf" onClick={onExportPdf} disabled={!fileName}>
-          📄 Export PDF
+        <button className="btn btn-pdf" onClick={onExportPdf} disabled={!fileName || exporting}>
+          {exporting ? 'Preparing PDF…' : '📄 Export PDF'}
         </button>
       </div>
     </header>

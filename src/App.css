@@ -533,3 +533,48 @@ body {
     max-width: 100% !important;
   }
 }
+
+.error-banner {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.error-banner button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.sidebar-empty {
+  padding: 14px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.app-body, .main { min-width: 0; }
+
+@media print {
+  .error-banner { display: none !important; }
+  .app, .app-body, .main { height: auto; overflow: visible; display: block; }
+}
+
+@media print {
+  .markdown-body h1, .markdown-body h2, .markdown-body h3,
+  .markdown-body h4, .markdown-body h5, .markdown-body h6 {
+    page-break-after: avoid;
+  }
+  .markdown-body table {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .mermaid-output { page-break-inside: avoid; }
+}

@@ -7,7 +7,8 @@ This is a **sample** markdown file to test the viewer.
 - [x] Live markdown preview
 - [x] Syntax highlighting
 - [x] Drag & drop file
-- [ ] PDF export *(coming soon)*
+- [x] PDF export
+- [x] Offline Mermaid diagrams
 
 ## Code Example
 

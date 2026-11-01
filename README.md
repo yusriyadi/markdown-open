@@ -1,88 +1,98 @@
 # 📝 Markdown Open
 
-Open, preview, and export Markdown files — as a **web app** or **native macOS `.app`**.
-
-![Stack](https://img.shields.io/badge/React-18-blue) ![Stack](https://img.shields.io/badge/TypeScript-5.7-blue) ![Stack](https://img.shields.io/badge/Vite-6-purple) ![Stack](https://img.shields.io/badge/Electron-42-9cf)
+An offline Markdown and Mermaid viewer built with **Tauri + Rust**, **React**, and
+**TypeScript**. Available as a macOS desktop app or a standalone web app.
 
 ## Features
 
-- 🔍 **Live preview** — GitHub-flavored Markdown with syntax highlighting
-- 📊 **Mermaid diagrams** — Render fenced `mermaid` blocks offline with light/dark themes
-- 📂 **Workspace explorer** — Browse all `.md` files in a folder tree (Electron)
-- 🔗 **Clickable links** — Navigate between local `.md` files
-- 🌓 **Dark mode** — Auto follows system preference
-- 📄 **Export PDF** — Native browser print (⌘P → Save as PDF)
-- 📱 **Responsive** — Works on any screen size
-- 🖥️ **Open With** — Set as default `.md` viewer on macOS
+- Markdown preview with tables, code fences, and syntax highlighting.
+- Offline Mermaid diagrams with light/dark themes and source fallback for invalid diagrams.
+- Native file/folder selection and a recursive Markdown workspace explorer.
+- Local Markdown links resolved relative to the current document.
+- Finder **Open With**, including when the app is closed or its window is hidden.
+- Native file drops, including onto an already-open document.
+- System light/dark theme and PDF export through the macOS print dialog.
+- Browser mode for opening local files without installing the desktop app.
 
-## Quick Start
+## Development
 
-### Web App
+### Prerequisites
+
+- Node.js 22.12+ and npm.
+- A current stable Rust toolchain installed with [rustup](https://rustup.rs/).
+- macOS 11+ with Xcode Command Line Tools (or Xcode) for desktop builds.
+- This release workflow targets Apple Silicon (`aarch64-apple-darwin`).
 
 ```bash
 git clone https://github.com/yusriyadi/markdown-open.git
 cd markdown-open
-
-npm install
-npm run dev          # → http://localhost:5173
+npm ci
 ```
 
-### Electron (Desktop App)
+### Desktop
 
 ```bash
-npm install
-npm run electron:dev     # Vite hot reload + Electron window
+npm run desktop:dev
 ```
 
-## Build
+This starts Vite and the Tauri desktop shell. Rust handles filesystem operations,
+OS file-open events, native dialogs, and printing. React, markdown-it, highlight.js,
+and Mermaid run inside the system WKWebView. The installed app needs no Node.js,
+Rust installation, development server, or internet for its core features.
 
-### Web App → `dist/`
+### Web
 
 ```bash
+npm run dev
 npm run build
+npm run preview
 ```
 
-Output: static HTML/CSS/JS. Deploy ke **Vercel, Netlify, GitHub Pages**, atau server apapun.
+The web build is written to `dist/`. File selection and drag/drop use browser APIs;
+Open Folder, Finder integration, and desktop filesystem navigation are available
+in the desktop app. PDF export uses the browser print dialog in web mode.
+
+## Build macOS Distribution
 
 ```bash
-# Example: deploy to Vercel
-npx vercel --prod
+rustup target add aarch64-apple-darwin
+npm run desktop:build
 ```
 
-### macOS `.app` → `release/`
+Outputs in `release/tauri-arm64/`:
 
-```bash
-npm run electron:build
-```
+- `Markdown Open.app`
+- `Markdown Open-1.0.0-arm64.dmg`
+- `Markdown Open-1.0.0-arm64-mac.zip`
 
-Output:
-- `release/Markdown Open-1.0.0-arm64.dmg` (installer)
-- `release/Markdown Open-1.0.0-arm64-mac.zip`
-- `release/mac-arm64/Markdown Open.app`
+Open the DMG and drag the application to Applications. This replaces the previous
+app only if you choose to do so. Finder file associations are registered by the
+bundle; users choose their preferred default viewer in macOS.
 
-Install by opening `.dmg` and dragging to `/Applications`.
+The packaging script records exact DMG, ZIP, and installed app sizes in
+`docs/tauri-size-report.json`, comparing them with the preserved Electron baseline.
+The old Electron artifacts remain separate in `release/` on the development machine.
+
+Signing and notarization require an appropriate Apple Developer identity and
+credentials. Local builds without those credentials are not notarized for public
+release; macOS may block first launch of a downloaded copy. Do not treat an unsigned
+local build as an Apple-verified distribution.
 
 ## Usage
 
-### Web App
+1. Click **Open File**, drop a `.md`/`.markdown` file, or use Finder **Open With**.
+2. Click **Open Folder** to browse a Markdown workspace.
+3. Click a sidebar file or a local Markdown link to navigate.
+4. Click **Export PDF**, then choose the macOS PDF save option in the print dialog.
+5. Closing the window keeps the app available in the Dock. Use **Quit** to exit.
 
-1. Open `http://localhost:5173`
-2. Drag a `.md` file onto the drop zone — or click **Open File**
-3. Preview renders instantly
-4. Click **Export PDF** → browser print dialog → Save as PDF
+Export waits for Mermaid rendering and document fonts. The native print dialog
+owns the save/print/cancel interaction; cancelling preserves the open document.
+Images explicitly referenced from remote sites still require internet access.
 
-### Desktop App (Electron)
+### Mermaid
 
-1. Open **Markdown Open.app**
-2. Click **📂 Open Folder** → pick a directory
-3. Sidebar shows all `.md` files in the tree
-4. Click any file → preview on the right
-5. Click `.md` links in the preview → navigate between files
-6. **macOS integration:** right-click any `.md` → Open With → Markdown Open
-
-### Mermaid Diagrams
-
-Use a fenced code block with the `mermaid` language:
+Use a fenced `mermaid` block:
 
 ````markdown
 ```mermaid
@@ -91,58 +101,45 @@ flowchart LR
 ```
 ````
 
-Diagrams render locally without an internet connection and follow the system theme.
-Invalid diagrams show a message and the original code. PDF export waits for diagrams
-to finish rendering. See `sample.md` for flowchart and sequence diagram examples.
+See `sample.md` for flowchart and sequence diagram examples. Diagram scripts are
+bundled locally and loaded only for documents containing Mermaid blocks.
 
-## Scripts
+## Validation
 
-| Script | Description |
-|---|---|
-| `npm run dev` | Web dev server (Vite) |
-| `npm run build` | Build web app → `dist/` |
-| `npm run preview` | Preview built web app |
-| `npm run electron:dev` | Electron dev (Vite + Electron) |
-| `npm run electron:build` | Build `.dmg` + `.app` → `release/` |
-
-## Tech Stack
-
-| Layer | Tech |
-|---|---|
-| Framework | React 18 + TypeScript |
-| Bundler | Vite 6 |
-| Markdown | `markdown-it` (GFM, linkify, typographer) |
-| Syntax | `highlight.js` (190+ languages) |
-| PDF export | Browser native `window.print()` |
-| Desktop | Electron 42 + electron-builder |
-
-## Project Structure
-
+```bash
+npm test
+npm run test:rust
+npm run build
 ```
-markdown-open/
-├── electron/
-│   ├── main.cjs         # Electron main process
-│   └── preload.cjs      # IPC bridge (contextBridge)
-├── src/
-│   ├── App.tsx          # Root layout + state
-│   ├── App.css          # Styles (light/dark/print)
-│   ├── main.tsx         # React entry
-│   ├── electron.d.ts    # TypeScript types for IPC
-│   ├── components/
-│   │   ├── Header.tsx       # Toolbar
-│   │   ├── Sidebar.tsx      # File tree (Electron)
-│   │   ├── FileDropZone.tsx # Drag & drop
-│   │   └── PreviewPane.tsx  # Markdown renderer
-│   └── lib/
-│       ├── markdown.ts      # markdown-it config
-│       ├── highlight.ts     # highlight.js setup
-│       └── export-pdf.ts    # window.print() trigger
-├── assets/
-│   └── icon.svg, icns   # App icon
-├── sample.md            # Demo file
-├── package.json
-└── vite.config.ts
-```
+
+Rust tests exercise document permissions, empty/Unicode files, relative links,
+workspace filtering/order, symlink handling, and queued file-open requests.
+Frontend tests cover stale loads, cancellation, the native event inbox lifecycle,
+and Markdown source escaping. A DOM integration test also checks browser file loading, empty documents, and error preservation without Tauri. Native smoke testing must use the packaged macOS
+application: Finder cold/warm opens, native drops/dialogs, and real PDF output
+cannot be proven by a Chromium-only test.
+
+## Architecture
+
+| Layer | Technology |
+|---|---|
+| Desktop runtime | Tauri 2 + Rust |
+| macOS rendering | System WKWebView |
+| UI | React 18 + TypeScript + CSS |
+| Frontend build | Vite |
+| Markdown / code | markdown-it / highlight.js |
+| Diagrams | Mermaid, bundled for offline use |
+| PDF | Native WKWebView print operation; browser printing in web mode |
+| Tests | Rust tests with temporary filesystem fixtures; Vitest |
+
+The Rust document service grants access through native dialogs, Finder/drop events,
+and navigation from an already-authorized document. Workspace scans skip symlinks,
+`.git`, and `node_modules`. The local main window has a narrow Tauri capability;
+remote pages are not granted the desktop command interface.
+
+The migration scope and acceptance checklist are in
+[the PRD](docs/PRD-tauri-rust-migration.md). Measured results and remaining manual
+coverage are recorded in [migration validation](docs/migration-validation.md).
 
 ## License
 

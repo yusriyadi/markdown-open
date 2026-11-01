@@ -1,11 +1,6 @@
 import { useState } from 'react'
 
-interface FileTreeNode {
-  name: string
-  path: string
-  type: 'file' | 'directory'
-  children?: FileTreeNode[]
-}
+import type { FileTreeNode } from '../lib/types'
 
 interface SidebarProps {
   tree: FileTreeNode[]
@@ -62,7 +57,6 @@ function TreeNode({ node, activePath, onSelectFile, depth }: {
 }
 
 export default function Sidebar({ tree, activePath, onSelectFile, workspacePath }: SidebarProps) {
-  if (!tree || tree.length === 0) return null
 
   const folderName = workspacePath ? workspacePath.split('/').pop() || workspacePath : null
 
@@ -73,6 +67,7 @@ export default function Sidebar({ tree, activePath, onSelectFile, workspacePath 
         <span className="sidebar-count">{countFiles(tree)} files</span>
       </div>
       <div className="sidebar-tree">
+        {tree.length === 0 && <p className="sidebar-empty">No Markdown files in this folder.</p>}
         {tree.map((node) => (
           <TreeNode
             key={node.path}
