@@ -98,8 +98,8 @@ macOS `ditto` to create a ZIP and copies the artifacts into `release/tauri-arm64
 | Output | Purpose |
 |---|---|
 | `Markdown Open.app` | Application bundle |
-| `Markdown Open-1.0.0-arm64.dmg` | Drag-to-Applications installer |
-| `Markdown Open-1.0.0-arm64-mac.zip` | Compressed application bundle |
+| `Markdown Open-1.1.0-arm64.dmg` | Drag-to-Applications installer |
+| `Markdown Open-1.1.0-arm64-mac.zip` | Compressed application bundle |
 
 The filenames reflect the current version. Before a future release, keep the
 versions in `package.json`, `src-tauri/Cargo.toml`, and `src-tauri/tauri.conf.json`

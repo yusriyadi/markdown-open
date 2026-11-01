@@ -10,8 +10,10 @@ await fs.mkdir(output, { recursive: true })
 const app = path.join(output, 'Markdown Open.app')
 await fs.rm(app, { recursive: true, force: true })
 await fs.cp(path.join(bundle, 'macos/Markdown Open.app'), app, { recursive: true, verbatimSymlinks: true })
-const dmgName = (await fs.readdir(path.join(bundle, 'dmg'))).find(name => name.endsWith('.dmg'))
-if (!dmgName) throw new Error('Tauri did not produce a DMG.')
+const dmgName = `Markdown Open_${pkg.version}_aarch64.dmg`
+await fs.access(path.join(bundle, 'dmg', dmgName)).catch(() => {
+  throw new Error(`Tauri did not produce the expected DMG: ${dmgName}`)
+})
 const dmg = path.join(output, `Markdown Open-${pkg.version}-arm64.dmg`)
 const zip = path.join(output, `Markdown Open-${pkg.version}-arm64-mac.zip`)
 await fs.copyFile(path.join(bundle, 'dmg', dmgName), dmg)
