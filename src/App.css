@@ -647,3 +647,45 @@ body {
   }
   .mermaid-output { page-break-inside: avoid; }
 }
+
+/* Android uses the system picker and a single document view. */
+.app-android {
+  height: 100dvh;
+}
+
+.app-android .header {
+  padding: 12px 16px;
+  gap: 10px;
+}
+
+.app-android .header-actions {
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.app-android .header-filename {
+  flex-basis: 100%;
+  max-width: 100%;
+}
+
+.app-android .header .btn {
+  min-height: 44px;
+  flex: 1;
+}
+
+.app-android .preview-pane {
+  padding: 20px 16px;
+}
+
+.app-android .dropzone {
+  margin: 16px;
+  min-height: 180px;
+  padding: 16px;
+  text-align: center;
+}
+
+@media print {
+  .app-android { height: auto; }
+  .app-android .preview-pane { padding: 0; }
+}

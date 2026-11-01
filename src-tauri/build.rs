@@ -7,9 +7,10 @@ fn main() {
             "scan_workspace",
             "resolve_document_link",
             "drain_open_files",
+            "watch_open_files",
             "open_external",
             "print_document",
         ]),
     ))
-    .expect("failed to build desktop application");
+    .expect("failed to build application");
 }

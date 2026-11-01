@@ -1,11 +1,13 @@
-import type { DesktopBridge } from './types'
+import type { NativeBridge } from './types'
 
-export const isDesktop = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-let bridge: Promise<DesktopBridge> | undefined
+export const isNative = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+export const isAndroid = isNative && (import.meta.env.TAURI_ENV_PLATFORM === 'android' || /Android/i.test(navigator.userAgent))
+export const isDesktop = isNative && !isAndroid
+let bridge: Promise<NativeBridge> | undefined
 
-export function getDesktop(): Promise<DesktopBridge> {
-  if (!isDesktop) return Promise.reject(new Error('Desktop features are unavailable in the browser.'))
-  bridge ??= import('./tauri').then(module => module.desktop)
+export function getNative(): Promise<NativeBridge> {
+  if (!isNative) return Promise.reject(new Error('Native features are unavailable in the browser.'))
+  bridge ??= (isAndroid ? import('./android') : import('./tauri')).then(module => module.native)
   return bridge
 }
 

@@ -1,0 +1,8 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "android",
+  "description": "Android document picker, intent inbox, browser links and native printing; no arbitrary filesystem access.",
+  "platforms": ["android"],
+  "windows": ["main"],
+  "permissions": ["allow-pick-document", "allow-drain-open-files", "allow-watch-open-files", "allow-open-external", "allow-print-document"]
+}

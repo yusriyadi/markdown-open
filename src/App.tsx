@@ -4,7 +4,7 @@ import Sidebar from './components/Sidebar'
 import FileDropZone from './components/FileDropZone'
 import PreviewPane from './components/PreviewPane'
 import { exportToPdf } from './lib/export-pdf'
-import { errorMessage, getDesktop, isDesktop } from './lib/platform'
+import { errorMessage, getNative, isDesktop, isNative, isAndroid } from './lib/platform'
 import { LatestTask } from './lib/latest-task'
 import type { DocumentData, FileTreeNode } from './lib/types'
 
@@ -25,11 +25,11 @@ export default function App() {
   }, [reportError])
 
   const handleSelectFile = useCallback((path: string) => {
-    void loadDocument(async () => (await getDesktop()).readDocument(path))
+    void loadDocument(async () => (await getNative()).readDocument(path))
   }, [loadDocument])
 
   function handleOpenFile() {
-    if (isDesktop) void loadDocument(async () => (await getDesktop()).pickDocument())
+    if (isNative) void loadDocument(async () => (await getNative()).pickDocument())
     else fileInputRef.current?.click()
   }
 
@@ -61,7 +61,7 @@ export default function App() {
   function handleOpenFolder() {
     setError(null)
     void workspaceTask.current.run(async () => {
-      const api = await getDesktop()
+      const api = await getNative()
       const path = await api.pickWorkspace()
       if (path === null) return null
       return { path, ...await api.scanWorkspace(path) }
@@ -73,25 +73,26 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!isDesktop) return
+    if (!isNative) return
     let disposed = false
     let unsubscribe: (() => void) | undefined
-    void getDesktop().then(api => {
+    void getNative().then(api => {
       if (disposed) return
       unsubscribe = api.subscribeToFiles(request => {
         if (request.type === 'document') handleSelectFile(request.path)
+        else if (request.type === 'documentData') void loadDocument(async () => request.document)
         else reportError(request.message)
       })
     }).catch(reportError)
     return () => { disposed = true; unsubscribe?.() }
-  }, [handleSelectFile, reportError])
+  }, [handleSelectFile, loadDocument, reportError])
 
   useEffect(() => {
     window.document.title = document ? `${document.fileName} — Markdown Open` : 'Markdown Open'
   }, [document])
 
   return (
-    <div className="app">
+    <div className={`app${isAndroid ? ' app-android' : ''}`}>
       <Header
         fileName={document?.fileName ?? null}
         onOpenFile={handleOpenFile}
@@ -123,7 +124,7 @@ export default function App() {
                 const current = document.path
                 if (!current) return
                 void loadDocument(async () => {
-                  const api = await getDesktop()
+                  const api = await getNative()
                   const path = await api.resolveDocumentLink(current, href)
                   return api.readDocument(path)
                 })

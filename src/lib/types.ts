@@ -11,9 +11,12 @@ export interface FileTreeNode {
   children?: FileTreeNode[]
 }
 
-export type OpenRequest = { type: 'document'; path: string } | { type: 'error'; message: string }
+export type OpenRequest =
+  | { type: 'document'; path: string }
+  | { type: 'documentData'; document: DocumentData }
+  | { type: 'error'; message: string }
 
-export interface DesktopBridge {
+export interface NativeBridge {
   pickDocument(): Promise<DocumentData | null>
   readDocument(path: string): Promise<DocumentData>
   pickWorkspace(): Promise<string | null>
