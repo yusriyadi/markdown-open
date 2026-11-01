@@ -1,120 +1,135 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import FileDropZone from './components/FileDropZone'
 import PreviewPane from './components/PreviewPane'
 import { exportToPdf } from './lib/export-pdf'
-
-interface FileTreeNode {
-  name: string
-  path: string
-  type: 'file' | 'directory'
-  children?: FileTreeNode[]
-}
+import { errorMessage, getDesktop, isDesktop } from './lib/platform'
+import { LatestTask } from './lib/latest-task'
+import type { DocumentData, FileTreeNode } from './lib/types'
 
 export default function App() {
-  const [content, setContent] = useState<string | null>(null)
-  const [fileName, setFileName] = useState<string | null>(null)
+  const [document, setDocument] = useState<DocumentData | null>(null)
   const [fileTree, setFileTree] = useState<FileTreeNode[]>([])
   const [workspacePath, setWorkspacePath] = useState<string | null>(null)
-  const [activeFilePath, setActiveFilePath] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const documentTask = useRef(new LatestTask())
+  const workspaceTask = useRef(new LatestTask())
+  const reportError = useCallback((error: unknown) => setError(errorMessage(error)), [])
 
-  function handleFileLoad(content: string, fileName: string) {
-    setContent(content)
-    setFileName(fileName)
-  }
+  const loadDocument = useCallback((operation: () => Promise<DocumentData | null>) => {
+    setError(null)
+    return documentTask.current.run(operation, setDocument, reportError)
+  }, [reportError])
+
+  const handleSelectFile = useCallback((path: string) => {
+    void loadDocument(async () => (await getDesktop()).readDocument(path))
+  }, [loadDocument])
 
   function handleOpenFile() {
-    fileInputRef.current?.click()
+    if (isDesktop) void loadDocument(async () => (await getDesktop()).pickDocument())
+    else fileInputRef.current?.click()
   }
 
-  function handleExportPdf() {
-    exportToPdf()
-  }
-
-  async function handleOpenFolder() {
-    const api = window.electronAPI
-    if (!api) return
-    const folderPath = await api.openFolder()
-    if (!folderPath) return
-
-    const tree = await api.scanDirectory(folderPath)
-    setFileTree(tree)
-    setWorkspacePath(folderPath)
-    document.title = `${folderPath.split('/').pop() || folderPath} — Markdown Open`
-  }
-
-  async function handleSelectFile(filePath: string) {
-    const api = window.electronAPI
-    if (!api) return
-    const result = await api.readFile(filePath)
-    if ('content' in result) {
-      handleFileLoad(result.content, result.fileName)
-      setActiveFilePath(filePath)
-    }
-  }
-
-  // Electron: listen for file-open events (Finder "Open With" / double-click)
-  useEffect(() => {
-    const api = window.electronAPI
-    if (!api) return
-
-    api.onFileOpen(async (filePath: string) => {
-      const result = await api.readFile(filePath)
-      if ('content' in result) {
-        handleFileLoad(result.content, result.fileName)
-        setActiveFilePath(filePath)
-      }
+  function handleBrowserFile(file: File) {
+    void loadDocument(async () => {
+      if (!/\.(md|markdown)$/i.test(file.name)) throw new Error('Choose a Markdown file (.md or .markdown).')
+      return { content: await file.text(), fileName: file.name, path: null }
     })
-  }, [])
+  }
 
-  const showSidebar = fileTree.length > 0
+  const handleExportPdf = useCallback(async () => {
+    setExporting(true)
+    setError(null)
+    try { await exportToPdf() } catch (error) { reportError(error) }
+    finally { setExporting(false) }
+  }, [reportError])
+
+  useEffect(() => {
+    const handlePrint = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'p' && document !== null) {
+        event.preventDefault()
+        if (!exporting) void handleExportPdf()
+      }
+    }
+    window.addEventListener('keydown', handlePrint)
+    return () => window.removeEventListener('keydown', handlePrint)
+  }, [document, exporting, handleExportPdf])
+
+  function handleOpenFolder() {
+    setError(null)
+    void workspaceTask.current.run(async () => {
+      const api = await getDesktop()
+      const path = await api.pickWorkspace()
+      if (path === null) return null
+      return { path, ...await api.scanWorkspace(path) }
+    }, result => {
+      setFileTree(result.nodes)
+      setWorkspacePath(result.path)
+      if (result.warnings.length) setError(`Some folders could not be read: ${result.warnings.join('; ')}`)
+    }, reportError)
+  }
+
+  useEffect(() => {
+    if (!isDesktop) return
+    let disposed = false
+    let unsubscribe: (() => void) | undefined
+    void getDesktop().then(api => {
+      if (disposed) return
+      unsubscribe = api.subscribeToFiles(request => {
+        if (request.type === 'document') handleSelectFile(request.path)
+        else reportError(request.message)
+      })
+    }).catch(reportError)
+    return () => { disposed = true; unsubscribe?.() }
+  }, [handleSelectFile, reportError])
+
+  useEffect(() => {
+    window.document.title = document ? `${document.fileName} — Markdown Open` : 'Markdown Open'
+  }, [document])
 
   return (
     <div className="app">
       <Header
-        fileName={fileName}
+        fileName={document?.fileName ?? null}
         onOpenFile={handleOpenFile}
         onExportPdf={handleExportPdf}
-        onOpenFolder={window.electronAPI ? handleOpenFolder : undefined}
+        exporting={exporting}
+        onOpenFolder={isDesktop ? handleOpenFolder : undefined}
       />
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".md,.markdown"
-        style={{ display: 'none' }}
-        onChange={(e) => {
-          const file = e.target.files?.[0]
-          if (file) {
-            const reader = new FileReader()
-            reader.onload = (ev) => {
-              handleFileLoad(ev.target?.result as string, file.name)
-            }
-            reader.readAsText(file)
-          }
-        }}
-      />
-
+      {error && (
+        <div className="error-banner" role="alert">
+          <span>{error}</span>
+          <button type="button" onClick={() => setError(null)} aria-label="Dismiss message">×</button>
+        </div>
+      )}
+      <input ref={fileInputRef} type="file" accept=".md,.markdown" style={{ display: 'none' }}
+        onChange={event => {
+          const file = event.target.files?.[0]
+          if (file) handleBrowserFile(file)
+          event.target.value = ''
+        }} />
       <div className="app-body">
-        {showSidebar && (
-          <Sidebar
-            tree={fileTree}
-            activePath={activeFilePath}
-            onSelectFile={handleSelectFile}
-            workspacePath={workspacePath}
-          />
+        {workspacePath !== null && (
+          <Sidebar tree={fileTree} activePath={document?.path ?? null}
+            onSelectFile={handleSelectFile} workspacePath={workspacePath} />
         )}
         <main className="main">
-          {content ? (
-            <PreviewPane
-              content={content}
-              currentFilePath={activeFilePath}
-              onNavigate={handleSelectFile}
-            />
+          {document !== null ? (
+            <PreviewPane content={document.content} currentFilePath={document.path}
+              onNavigate={href => {
+                const current = document.path
+                if (!current) return
+                void loadDocument(async () => {
+                  const api = await getDesktop()
+                  const path = await api.resolveDocumentLink(current, href)
+                  return api.readDocument(path)
+                })
+              }} onError={reportError} />
           ) : (
-            <FileDropZone onFileLoad={handleFileLoad} />
+            <FileDropZone onOpenFile={handleOpenFile} onFileDrop={handleBrowserFile} />
           )}
         </main>
       </div>

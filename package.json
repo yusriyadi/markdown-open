@@ -1,17 +1,20 @@
 {
   "name": "markdown-open",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
-  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "electron:dev": "concurrently \"vite\" \"sleep 2 && electron .\"",
-    "electron:build": "tsc -b && vite build && electron-builder"
+    "test": "vitest run",
+    "tauri": "tauri",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build --target aarch64-apple-darwin && node scripts/package-macos.mjs",
+    "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml"
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.12.4",
     "highlight.js": "^11.11.1",
     "markdown-it": "^14.1.0",
     "mermaid": "^12.2.0",
@@ -19,34 +22,15 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.12.4",
     "@types/markdown-it": "^14.1.2",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^4.6.0",
-    "concurrently": "^10.0.3",
-    "electron": "^42.4.1",
-    "electron-builder": "^26.15.3",
+    "jsdom": "^27.0.1",
     "typescript": "~5.7.3",
-    "vite": "^6.4.1"
+    "vite": "^6.4.1",
+    "vitest": "^3.2.7"
   },
-  "build": {
-    "appId": "com.markdown-open.app",
-    "productName": "Markdown Open",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**/*",
-      "electron/**/*.cjs"
-    ],
-    "mac": {
-      "target": ["dmg", "zip"],
-      "category": "public.app-category.productivity",
-      "icon": "assets/icon.icns"
-    },
-    "fileAssociations": [
-      { "ext": "md", "name": "Markdown", "role": "Viewer" },
-      { "ext": "markdown", "name": "Markdown", "role": "Viewer" }
-    ]
-  }
+  "description": "Offline Markdown and Mermaid viewer for macOS and the web"
 }

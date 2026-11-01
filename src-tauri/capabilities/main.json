@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "Only the local main window may use document commands and listen for file-open events.",
+  "windows": ["main"],
+  "permissions": [
+    "core:event:allow-listen", "core:event:allow-unlisten",
+    "allow-pick-document", "allow-read-document", "allow-pick-workspace",
+    "allow-scan-workspace", "allow-resolve-document-link", "allow-drain-open-files",
+    "allow-open-external", "allow-print-document"
+  ]
+}
